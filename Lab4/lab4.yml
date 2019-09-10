@@ -46,6 +46,11 @@
 
   - name: show configuration
     shell: "net show configuration"
+    register: output2
+
+  - name: Print show config
+    debug:
+      var: output2
 
 
 #Commands
