@@ -1,0 +1,83 @@
+---
+- name: Config leaf01 and leaf02 for lab3
+  hosts: switches
+  become: yes
+  tasks:
+  - name: Setup ntp server
+    nclu:
+      commands:
+      - add time ntp server 192.168.0.254 iburst
+      - del time ntp server 0.cumulusnetworks.pool.ntp.org
+      - del time ntp server 1.cumulusnetworks.pool.ntp.org
+      - del time ntp server 2.cumulusnetworks.pool.ntp.org
+      - del time ntp server 3.cumulusnetworks.pool.ntp.org
+      atomic: true
+
+  - name: add clag
+    nclu:
+      commands:
+      - add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 {{ role }} backup-ip {{ backup-ip }}
+      atomic: true
+
+  - name: show clag
+    nclu:
+      commands:
+      - show clag
+      register: output
+
+  - name: add bond for server01 and server02
+    nclu:
+      commands:
+      - add clag port bond SERVER01 interface swp1 clag-id 1
+      - add clag port bond SERVER02 interface swp2 clag-id 2
+      - add bond SERVER01 bridge access 10
+      - add bond SERVER02 bridge access 10
+      atomic: true
+
+  - name: show configuration
+    nclu:
+      commands:
+      - show configuration
+      register: output
+
+#Commands
+
+#NTP config
+#cumulus@leaf01:~$ net add time ntp server 192.168.0.254 iburst
+#cumulus@leaf01:~$ net del time ntp server 0.cumulusnetworks.pool.ntp.org
+#cumulus@leaf01:~$ net del time ntp server 1.cumulusnetworks.pool.ntp.org
+#cumulus@leaf01:~$ net del time ntp server 2.cumulusnetworks.pool.ntp.org
+#cumulus@leaf01:~$ net del time ntp server 3.cumulusnetworks.pool.ntp.org
+#cumulus@leaf01:~$ net commit
+
+#cumulus@leaf02:~$ net add time ntp server 192.168.0.254 iburst
+#cumulus@leaf02:~$ net del time ntp server 0.cumulusnetworks.pool.ntp.org
+#cumulus@leaf02:~$ net del time ntp server 1.cumulusnetworks.pool.ntp.org
+#cumulus@leaf02:~$ net del time ntp server 2.cumulusnetworks.pool.ntp.org
+#cumulus@leaf02:~$ net del time ntp server 3.cumulusnetworks.pool.ntp.org
+#cumulus@leaf02:~$ net commit
+
+
+#CLAG Config
+#cumulus@leaf01:~$ net add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 primary backup-ip 192.168.0.12
+#cumulus@leaf01:~$ net commit
+
+#cumulus@leaf02:~$ net add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 secondary backup-ip 192.168.0.11
+#cumulus@leaf02:~$ net commit
+
+
+#MLAG Bond Config
+#cumulus@leaf01:~$ net add clag port bond SERVER01 interface swp1 clag-id 1
+#cumulus@leaf01:~$ net add clag port bond SERVER02 interface swp2 clag-id 2
+#cumulus@leaf01:~$ net add bond SERVER01 bridge access 10
+#cumulus@leaf01:~$ net add bond SERVER02 bridge access 10
+#cumulus@leaf01:~$ net commit
+
+#cumulus@leaf02:~$ net add clag port bond SERVER01 interface swp1 clag-id 1
+#cumulus@leaf02:~$ net add clag port bond SERVER02 interface swp2 clag-id 2
+#cumulus@leaf02:~$ net add bond SERVER01 bridge access 10
+#cumulus@leaf02:~$ net add bond SERVER02 bridge access 10
+#cumulus@leaf02:~$ net commit
+
+
+

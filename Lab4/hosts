@@ -1,0 +1,8 @@
+[switches]
+leaf01  lbi=10.255.255.1/32 role=primary backup-ip=192.168.0.12
+leaf02	lbi=10.255.255.2/32 role=secondary backup-ip=192.168.0.11
+
+[all:vars]
+ansible_user=cumulus
+ansible_ssh_pass=CumulusLinux!
+ansible_become_pass=CumulusLinux!
