@@ -8,7 +8,7 @@
       commands:
       - add loopback lo ip address {{ lbi }}
       atomic: true
-  
+        
   - name: add bond between switches - lab02.
     nclu:
       commands:
