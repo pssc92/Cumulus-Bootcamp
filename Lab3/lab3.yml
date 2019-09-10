@@ -8,7 +8,7 @@
       commands:
       - add loopback lo ip address {{ lbi }}
       atomic: true
-        
+
   - name: add bond between switches - lab02.
     nclu:
       commands:
@@ -22,16 +22,19 @@
       commands:
       - add bridge bridge vids 10,20
       - add bridge bridge ports BOND0,{{ access_port }}
+      atomic: true
 
   - name: add ports to bridge
     nclu:
       commands:
       - add bridge bridge ports {{ bridge_ports }}
+      atomic: true
 
   - name: add access port to switch
     nclu:
       commands:
       - add interface {{ access_port }} bridge access 10
+      atomic: true
 
 
 
