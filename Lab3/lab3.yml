@@ -17,6 +17,12 @@
     loop:
       - { bondnr: BOND0, swprange: swp49-50 }
 
+  - name: add bridge to leaf01 and leaf02
+    nclu:
+      commands:
+      - add bridge bridge vids 10,20
+      - add bridge bridge ports BOND0,{{ access_port }}
+
   - name: add ports to bridge
     nclu:
       commands:
