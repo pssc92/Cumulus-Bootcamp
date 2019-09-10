@@ -3,26 +3,32 @@
   hosts: switches
   become: yes
   tasks:
-  - name: Add config to Leaf01
+  - name: add loopback interface, lab01.
     nclu:
       commands:
-      - add loopback lo ip address 10.255.255.1/32
-      - add bond BOND0 bond slaves swp49-50
-      - add bridge bridge vids 10,20
-      - add bridge bridge ports BOND0,swp1
-      - add interface swp1 bridge access 10
+      - add loopback lo ip address {{ lbi }}
       atomic: true
   
-  - name: Add config to Leaf02
+  - name: add bond between switches - lab02.
     nclu:
       commands:
-      - add loopback lo ip address 10.255.255.2/32
-      - add bond BOND0 bond slaves swp49-50
-      - add bridge bridge vids 10,20
-      - add bridge bridge ports BOND0,swp2
-      - add interface swp2 bridge access 10
+      - add bond {{ item.bondnr }} bond slaves {{ item.swprange }}
       atomic: true
- 
+    loop:
+      - { bondnr: BOND0, swprange: swp49-50 }
+
+  - name: add ports to bridge
+    nclu:
+      commands:
+      - add bridge bridge ports {{ bridge_ports }}
+
+  - name: add access port to switch
+    nclu:
+      commands:
+      - add interface {{ access_port }} bridge access 10
+
+
+
 #leaf01
 #net add loopback lo ip address 10.255.255.1/32
 #net add bond BOND0 bond slaves swp49-50

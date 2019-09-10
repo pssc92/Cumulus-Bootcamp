@@ -1,6 +1,6 @@
 [switches]
-leaf01  lbi=10.255.255.1/32
-leaf02	lbi=10.255.255.2/32
+leaf01  lbi=10.255.255.1/32 bridge_ports=BOND0,swp1 access_port=swp1
+leaf02	lbi=10.255.255.2/32 bridge_ports=BOND0,swp2 access_port=swp2
 
 [all:vars]
 ansible_user=cumulus
