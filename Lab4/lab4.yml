@@ -48,7 +48,7 @@
     nclu:
       commands:
       - show configuration
-      register: output
+    register: output
 
   - name: Print show clag
     debug:
