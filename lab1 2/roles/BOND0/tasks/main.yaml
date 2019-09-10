@@ -1,0 +1,11 @@
+---
+- name: Enable BOND0
+  nclu:
+   commands:
+   - add loopback lo ip address {{ lbi }}
+   - add bond {{ item.bondnr }} bond slaves {{ item.swprange }}
+   atomic: true
+   description: "Enable loopback and bond"
+  loop:
+    - { bondnr: BOND0, swprange: swp49-50 }
+ 

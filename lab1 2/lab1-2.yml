@@ -1,0 +1,19 @@
+---
+- name: Enable lab1 and lab2
+  hosts: switches
+  become: yes
+  tasks:
+  - name: add loopback interface, lab01.
+    nclu:
+      commands:
+      - add loopback lo ip address {{ lbi }}
+      atomic: true
+  
+  - name: add bond between switches - lab02.
+    nclu:
+      commands:
+      - add bond {{ item.bondnr }} bond slaves {{ item.swprange }}
+      atomic: true
+    loop:
+      - { bondnr: BOND0, swprange: swp49-50 }
+ 

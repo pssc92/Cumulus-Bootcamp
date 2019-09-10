@@ -1,0 +1,40 @@
+---
+- name: Config leaf01 and leaf02 for lab3
+  hosts: switches
+  become: yes
+  tasks:
+  - name: Add config to Leaf01
+    nclu:
+      commands:
+      - net add loopback lo ip address 10.255.255.1/32
+      - net add bond BOND0 bond slaves swp49-50
+      - net add bridge bridge vids 10,20
+      - net add bridge bridge ports BOND0,swp1
+      - net add interface swp1 bridge access 10
+      atomic: true
+  
+  - name: Add config to Leaf02
+    nclu:
+      commands:
+      - net add loopback lo ip address 10.255.255.2/32
+      - net add bond BOND0 bond slaves swp49-50
+      - net add bridge bridge vids 10,20
+      - net add bridge bridge ports BOND0,swp2
+      - net add interface swp2 bridge access 10
+      atomic: true
+ 
+#leaf01
+#net add loopback lo ip address 10.255.255.1/32
+#net add bond BOND0 bond slaves swp49-50
+#net add bridge bridge vids 10,20
+#net add bridge bridge ports BOND0,swp1
+#net add interface swp1 bridge access 10
+#
+#
+#leaf02
+#net add loopback lo ip address 10.255.255.2/32
+#net add bond BOND0 bond slaves swp49-50
+#net add bridge bridge vids 10,20
+#net add bridge bridge ports BOND0,swp2
+#net add interface swp2 bridge access 10
+#net commit
