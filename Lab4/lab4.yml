@@ -48,11 +48,11 @@
     nclu:
       commands:
       - show configuration
-      register: output2
+      register: output
 
   - name: Print show clag
     debug:
-      var: output2
+      var: output
 
 
 #Commands
