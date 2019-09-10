@@ -45,14 +45,7 @@
       atomic: true
 
   - name: show configuration
-    nclu:
-      commands:
-      - show configuration
-    register: output
-
-  - name: Print show clag
-    debug:
-      var: output
+    shell: "net show configuration"
 
 
 #Commands
@@ -93,6 +86,3 @@
 #cumulus@leaf02:~$ net add bond SERVER01 bridge access 10
 #cumulus@leaf02:~$ net add bond SERVER02 bridge access 10
 #cumulus@leaf02:~$ net commit
-
-
-
