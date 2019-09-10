@@ -29,7 +29,11 @@
     nclu:
       commands:
       - show clag
-      register: output
+    register: output1
+  
+  - name: Print show clag
+    debug:
+      var: output1
 
   - name: add bond for server01 and server02
     nclu:
@@ -44,7 +48,12 @@
     nclu:
       commands:
       - show configuration
-      register: output
+      register: output2
+
+  - name: Print show clag
+    debug:
+      var: output2
+
 
 #Commands
 
