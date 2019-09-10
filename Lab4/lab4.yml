@@ -3,6 +3,12 @@
   hosts: switches
   become: yes
   tasks:
+  - name: delete config
+    clu:
+      commands:
+      - del all
+      commit: true
+
   - name: Setup ntp server
     nclu:
       commands:
@@ -16,7 +22,7 @@
   - name: add clag
     nclu:
       commands:
-      - add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 {{ role }} backup-ip {{ backup-ip }}
+      - add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 {{ role }} backup-ip {{ backup_ip }}
       atomic: true
 
   - name: show clag
