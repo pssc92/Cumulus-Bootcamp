@@ -1,5 +1,5 @@
 ---
-- name: Config leaf01 and leaf02 for lab3
+- name: Config leaf01 and leaf02 for lab4a
   hosts: switches
   become: yes
   tasks:

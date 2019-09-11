@@ -1,5 +1,5 @@
 ---
-- name: Config leaf01 and leaf02 for lab3
+- name: Config leaf01 and leaf02 for lab4b
   hosts: switches
   become: yes
   tasks:
@@ -19,75 +19,66 @@
       - del time ntp server 3.cumulusnetworks.pool.ntp.org
       atomic: true
 
-  - name: add clag
+- name: Configure CLAG on Leaf01 and Leaf02 Switches
+  hosts: leaf01:leaf02
+  become: yes
+  vars:
+    devices:
+        leaf01:
+            clag_role: "primary"
+            clag_mac: "44:38:39:FF:00:01"
+            clag_backupip: "192.168.0.12"
+            VLANS:
+                - vlan: "10"
+                  vrrip: "10.0.10.1/24"
+                  vrrmac: "00:00:00:00:1a:10"
+                  bond: "SERVER01"
+                  interface: "swp1"
+                  realip: "10.0.10.2/24"
+                - vlan: "20"
+                  vrrip: "10.0.20.1/24"
+                  vrrmac: "00:00:00:00:1a:20"
+                  bond: "SERVER02"
+                  interface: "swp2"
+                  realip: "10.0.20.2/24"
+        leaf02:
+            clag_role: "secondary"
+            clag_mac: "44:38:39:FF:00:01"
+            clag_backupip: "192.168.0.11"
+            VLANS:
+                - vlan: "10"
+                  vrrip: "10.0.10.1/24"
+                  vrrmac: "00:00:00:00:1a:10"
+                  bond: "SERVER01"
+                  interface: "swp1"
+                  realip: "10.0.10.3/24"
+                - vlan: "20"
+                  vrrip: "10.0.20.1/24"
+                  vrrmac: "00:00:00:00:1a:20"
+                  bond: "SERVER02"
+                  interface: "swp2"
+                  realip: "10.0.20.3/24"
+
+  tasks:
+  - name: Lab 4b -- Deploy configuration
     nclu:
-      commands:
-      - add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 {{ role }} backup-ip {{ backup_ip }}
-      atomic: true
+        commit: true
+        description: "Deploy Lab4b interface configuration"
+        commands:
+            - add clag peer sys-mac {{ devices[ansible_hostname].clag_mac }} interface swp49-50 {{ devices[ansible_hostname].clag_role }} backup-ip {{ devices[ansible_hostname].clag_backupip }}
+            - add clag port bond {{ devices[ansible_hostname].VLANS[0].bond}} interface {{ devices[ansible_hostname].VLANS[0].interface }} clag-id 1
+            - add clag port bond {{ devices[ansible_hostname].VLANS[1].bond}} interface {{ devices[ansible_hostname].VLANS[1].interface }} clag-id 2
+            - add bond {{ devices[ansible_hostname].VLANS[0].bond }} bridge access  {{ devices[ansible_hostname].VLANS[0].vlan }}
+            - add bond {{ devices[ansible_hostname].VLANS[1].bond }} bridge access  {{ devices[ansible_hostname].VLANS[1].vlan }}
+            - add vlan {{ devices[ansible_hostname].VLANS[0].vlan }} ip address {{ devices[ansible_hostname].VLANS[0].realip }}
+            - add vlan {{ devices[ansible_hostname].VLANS[1].vlan }} ip address {{ devices[ansible_hostname].VLANS[1].realip }}
+            - add vlan {{ devices[ansible_hostname].VLANS[0].vlan }} ip address-virtual {{ devices[ansible_hostname].VLANS[0].vrrmac }} {{ devices[ansible_hostname].VLANS[0].vrrip }}
+            - add vlan {{ devices[ansible_hostname].VLANS[1].vlan }} ip address-virtual {{ devices[ansible_hostname].VLANS[1].vrrmac }} {{ devices[ansible_hostname].VLANS[1].vrrip }}
 
-  - name: show clag
-    nclu:
-      commands:
-      - show clag
-    register: output1
-  
-  - name: Print show clag
-    debug:
-      var: output1
+- name: show configuration
+  shell: "net show configuration"
+  register: output2
 
-  - name: add bond for server01 and server02
-    nclu:
-      commands:
-      - add clag port bond SERVER01 interface swp1 clag-id 1
-      - add clag port bond SERVER02 interface swp2 clag-id 2
-      - add bond SERVER01 bridge access 10
-      - add bond SERVER02 bridge access 10
-      atomic: true
-
-  - name: show configuration
-    shell: "net show configuration"
-    register: output2
-
-  - name: Print show config
-    debug:
-      var: output2
-
-
-#Commands
-
-#NTP config
-#cumulus@leaf01:~$ net add time ntp server 192.168.0.254 iburst
-#cumulus@leaf01:~$ net del time ntp server 0.cumulusnetworks.pool.ntp.org
-#cumulus@leaf01:~$ net del time ntp server 1.cumulusnetworks.pool.ntp.org
-#cumulus@leaf01:~$ net del time ntp server 2.cumulusnetworks.pool.ntp.org
-#cumulus@leaf01:~$ net del time ntp server 3.cumulusnetworks.pool.ntp.org
-#cumulus@leaf01:~$ net commit
-
-#cumulus@leaf02:~$ net add time ntp server 192.168.0.254 iburst
-#cumulus@leaf02:~$ net del time ntp server 0.cumulusnetworks.pool.ntp.org
-#cumulus@leaf02:~$ net del time ntp server 1.cumulusnetworks.pool.ntp.org
-#cumulus@leaf02:~$ net del time ntp server 2.cumulusnetworks.pool.ntp.org
-#cumulus@leaf02:~$ net del time ntp server 3.cumulusnetworks.pool.ntp.org
-#cumulus@leaf02:~$ net commit
-
-
-#CLAG Config
-#cumulus@leaf01:~$ net add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 primary backup-ip 192.168.0.12
-#cumulus@leaf01:~$ net commit
-
-#cumulus@leaf02:~$ net add clag peer sys-mac 44:38:39:FF:00:01 interface swp49-50 secondary backup-ip 192.168.0.11
-#cumulus@leaf02:~$ net commit
-
-
-#MLAG Bond Config
-#cumulus@leaf01:~$ net add clag port bond SERVER01 interface swp1 clag-id 1
-#cumulus@leaf01:~$ net add clag port bond SERVER02 interface swp2 clag-id 2
-#cumulus@leaf01:~$ net add bond SERVER01 bridge access 10
-#cumulus@leaf01:~$ net add bond SERVER02 bridge access 10
-#cumulus@leaf01:~$ net commit
-
-#cumulus@leaf02:~$ net add clag port bond SERVER01 interface swp1 clag-id 1
-#cumulus@leaf02:~$ net add clag port bond SERVER02 interface swp2 clag-id 2
-#cumulus@leaf02:~$ net add bond SERVER01 bridge access 10
-#cumulus@leaf02:~$ net add bond SERVER02 bridge access 10
-#cumulus@leaf02:~$ net commit
+- name: Print show config
+  debug:
+    var: output2
