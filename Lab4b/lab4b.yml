@@ -75,10 +75,10 @@
             - add vlan {{ devices[ansible_hostname].VLANS[0].vlan }} ip address-virtual {{ devices[ansible_hostname].VLANS[0].vrrmac }} {{ devices[ansible_hostname].VLANS[0].vrrip }}
             - add vlan {{ devices[ansible_hostname].VLANS[1].vlan }} ip address-virtual {{ devices[ansible_hostname].VLANS[1].vrrmac }} {{ devices[ansible_hostname].VLANS[1].vrrip }}
 
-- name: show configuration
-  shell: "net show configuration"
-  register: output2
+  - name: show configuration
+    shell: "net show configuration"
+    register: output2
 
-- name: Print show config
-  debug:
-    var: output2
+  - name: Print show config
+    debug:
+      var: output2
