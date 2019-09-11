@@ -1,0 +1,97 @@
+- name: Wipe Configuration
+  hosts: spine,leaf
+  become: yes
+  gather_facts: no
+  roles:
+  - reset
+
+- name: Lab 1 Setup PTM on Leaf01
+  hosts: leaf01
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Download the topology.dot file from the OOB-MGMT-SERVER
+    get_url:
+      url: http://192.168.0.254/topology.dot
+      dest: /etc/ptm.d/topology.dot
+      mode: 0755
+
+  - name: Restart PTM Daemon to Apply new Topology.dot file
+    service: name=ptmd state=restarted
+
+  - name: Test PTM
+    shell: ptmctl
+    register: ptm_output
+    failed_when: ('pass' not in ptm_output.stdout)
+
+  - name: Install License
+    shell: cl-license -i http://192.168.0.254/license.lic
+    register: cllicense_output
+    failed_when: ('License file installed.' not in cllicense_output.stdout)
+
+- name: Lab 2 NCLU
+  hosts: leaf01
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Commit a Small Change To An Interface Description
+    nclu:
+      atomic: yes
+      description: "Lab2 Commit"
+      commands:
+          - 'add interface swp1 alias Connection to Server01:eth1'
+
+  - name: Look At Commit History
+    shell: net show commit history
+    register: commit_history_output
+    failed_when: ('Lab2 Commit' not in commit_history_output.stdout)
+
+  - name: Enable and Start restserver
+    service: name=restserver state=started enabled=yes
+
+- name: Lab 2 Test API
+  hosts: leaf02
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Test Call to the API on Leaf01
+    uri:
+     url: https://192.168.0.11:8080/nclu/v1/rpc
+     method: POST
+     force_basic_auth: yes
+     user: cumulus
+     password: 'CumulusLinux!'
+     body: '{"cmd": "show interface"}'
+     body_format: raw
+     return_content: yes
+     status_code: 200
+     validate_certs: no
+     headers:
+       Content-Type: "application/json"
+    register: api_result1
+    failed_when: ('ERROR' in api_result1.content)
+
+  - name: API Call 1 output
+    debug:
+      msg: "{{api_result1.content.split('\n')}}"
+
+  - name: Test Call to the API on Leaf01 with JSON
+    uri:
+     url: https://192.168.0.11:8080/nclu/v1/rpc
+     method: POST
+     force_basic_auth: yes
+     user: cumulus
+     password: 'CumulusLinux!'
+     body: '{"cmd": "show interface json"}'
+     status_code: 200
+     validate_certs: no
+     headers:
+       Content-Type: "application/json"
+    register: api_result2
+    failed_when: api_result2.json is undefined
+
+  - name: API Call 2 output
+    debug:
+      var: api_result2.json
+
+

@@ -1,0 +1,69 @@
+- name: Clear config
+  nclu:
+      atomic: true
+      commands:
+        - del all
+  tags:
+    - wipe
+
+- name: Remove PTM file
+  file:
+    path: /etc/ptm.d/topology.dot
+    state: absent
+  tags:
+    - wipe
+
+- name: Restart PTM Daemon to Apply New PTM Config
+  service: name=ptmd state=restarted
+  tags:
+    - wipe
+
+- name: Stop FRR
+  service: name=frr state=stopped
+  tags:
+    - wipe
+
+- name: Copy the Default Interface Configuration in Place
+  copy:
+    dest: /etc/network/interfaces
+    content: |
+      # The loopback network interface
+      auto lo
+      iface lo inet loopback
+
+      # The primary network interface
+      auto eth0
+      iface eth0 inet dhcp
+  tags:
+    - wipe
+
+  # Applied like this to Handle the case where we're removing MGMT VRF
+- name: Apply Default Interface Configuration
+  shell: nohup bash -c 'sleep 2 && ifreload -a > /tmp/ifreload.out 2>&1' &
+  async: 1
+  poll: 0
+  changed_when: True
+  tags:
+    - wipe
+
+
+- name: Wait 5 seconds for port 22 to become open and contain "OpenSSH"
+  wait_for:
+    port: 22
+    search_regex: OpenSSH
+    delay: 5
+  connection: local
+  tags:
+    - wipe
+
+- name: Restore NTP
+  nclu:
+      atomic: true
+      commands:
+        - add time ntp server 192.168.0.254 iburst
+        - del time ntp server 0.cumulusnetworks.pool.ntp.org
+        - del time ntp server 1.cumulusnetworks.pool.ntp.org
+        - del time ntp server 2.cumulusnetworks.pool.ntp.org
+        - del time ntp server 3.cumulusnetworks.pool.ntp.org
+  tags:
+    - wipe

@@ -1,0 +1,39 @@
+#this file has been configured by ansible
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+    address {{ devices[ansible_hostname].loopback }}/32
+
+#The management network interface
+auto eth0
+iface eth0 inet dhcp
+
+auto swp1
+iface swp1
+    bridge-access {{ devices[ansible_hostname].swp1.bridge_access }}
+
+auto swp2
+iface swp2
+    bridge-access {{ devices[ansible_hostname].swp2.bridge_access }}
+
+auto swp49
+iface swp49
+
+auto swp50
+iface swp50
+
+auto bond0
+iface bond0
+    address {{ devices[ansible_hostname].bond0 }}/30
+    bond-slaves swp49 swp50
+
+auto bridge
+iface bridge
+    bridge-ports {{ devices[ansible_hostname].bridge.members }}
+    bridge-vids {{ devices[ansible_hostname].bridge.vlans }}
+    bridge-vlan-aware yes
+
+auto bridge.{{ devices[ansible_hostname].bridge.svi.vlan }}
+iface bridge.{{ devices[ansible_hostname].bridge.svi.vlan }}
+    address {{ devices[ansible_hostname].bridge.svi.network }}

@@ -1,0 +1,32 @@
+- name: Wipe Configuration
+  hosts: spine,leaf
+  become: yes
+  roles:
+  - reset
+
+
+- name: Lab 1 Setup PTM on Leaf01
+  hosts: leaf01
+  become: yes
+  tasks:
+  - name: Download the topology.dot file from the OOB-MGMT-SERVER
+    get_url:
+      url: http://192.168.0.254/topology.dot
+      dest: /etc/ptm.d/topology.dot
+      mode: 0755
+
+  - name: Restart PTM Daemon to Apply new Topology.dot file
+    service: name=ptmd state=restarted
+
+  - name: Test PTM
+    shell: ptmctl
+    register: ptm_output
+    failed_when: ('pass' not in ptm_output.stdout)
+
+  - name: Install License
+    shell: cl-license -i http://192.168.0.254/license.lic
+    register: cllicense_output
+    failed_when: ('License file installed.' not in cllicense_output.stdout)
+
+  - name: Restart Switchd
+    service: name=switchd state=restarted

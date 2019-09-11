@@ -1,0 +1,63 @@
+- name: Wipe Configuration
+  hosts: spine,leaf
+  become: yes
+  roles:
+  - reset
+
+- name: Lab 1 Setup PTM
+  hosts: leaf01,leaf02,spine01
+  become: yes
+  tasks:
+  - name: Download the topology.dot file from the OOB-MGMT-SERVER
+    get_url:
+      url: http://192.168.0.254/topology.dot
+      dest: /etc/ptm.d/topology.dot
+      mode: 0755
+
+  - name: Restart PTM Daemon to Apply new Topology.dot file
+    service: name=ptmd state=restarted
+
+  - name: Test PTM
+    shell: ptmctl
+    register: ptm_output
+    failed_when: ('pass' not in ptm_output.stdout)
+
+  - name: Install License
+    shell: cl-license -i http://192.168.0.254/license.lic
+    register: cllicense_output
+    failed_when: ('License file installed.' not in cllicense_output.stdout)
+
+
+- name: Configure CLAG on Leaf01 and Leaf02 Switches
+  hosts: leaf01:leaf02
+  become: yes
+  vars:
+    devices:
+        leaf01:
+            loopback: "10.255.255.1/32"
+            bridgeports: "swp1"
+        leaf02:
+            loopback: "10.255.255.2/32"
+            bridgeports: "swp2"
+
+  tasks:
+  - name: Lab 3 -- Deploy configuration
+    nclu:
+        commit: true
+        description: "Deploy interface configuration"
+        commands:
+            - add loopback lo ip address {{ devices[ansible_hostname].loopback }}
+            - add bond BOND0 bond slaves swp49-50
+            - add bridge bridge vids 10,20
+            - add bridge bridge ports BOND0,{{ devices[ansible_hostname].bridgeports }}
+            - add interface {{ devices[ansible_hostname].bridgeports }} bridge access 10
+
+- name: Server Configuration
+  hosts: server01,server02
+  become: yes
+  tasks:
+  - name: Copy Interfaces Configuration File
+    copy: src=./{{ ansible_hostname }}_lab3.cfg dest=/etc/network/interfaces
+
+  - name: Restart Networking
+    service: name=networking state=restarted
