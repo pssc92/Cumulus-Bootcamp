@@ -1,0 +1,38 @@
+---
+- name: Config leaf01 and leaf02 for lab4b
+  hosts: switches
+  become: yes
+  tasks:
+  - name: delete config
+    nclu:
+      commands:
+      - del all
+      commit: true
+
+  - name: Setup ntp server
+    nclu:
+      commands:
+      - add time ntp server 192.168.0.254 iburst
+      - del time ntp server 0.cumulusnetworks.pool.ntp.org
+      - del time ntp server 1.cumulusnetworks.pool.ntp.org
+      - del time ntp server 2.cumulusnetworks.pool.ntp.org
+      - del time ntp server 3.cumulusnetworks.pool.ntp.org
+      atomic: true
+
+
+
+
+
+
+
+
+
+      
+
+  - name: show configuration
+    shell: "net show configuration"
+    register: output2
+
+  - name: Print show config
+    debug:
+      var: output2

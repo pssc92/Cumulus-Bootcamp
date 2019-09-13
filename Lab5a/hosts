@@ -1,0 +1,8 @@
+[switches]
+leaf01
+leaf02
+
+[all:vars]
+ansible_user=cumulus
+ansible_ssh_pass=CumulusLinux!
+ansible_become_pass=CumulusLinux!
